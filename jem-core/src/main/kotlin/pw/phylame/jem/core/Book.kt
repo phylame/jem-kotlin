@@ -20,16 +20,9 @@ package pw.phylame.jem.core
 
 import java.util.*
 
-interface Cleanable {
-    fun clean(chapter: Chapter)
-}
-
 open class Chapter : Iterable<Chapter>, Cloneable {
     init {
         attributes = VariantMap()
-        attributes.validator = fun(name, value) {
-            println("$name=$value")
-        }
     }
 
     constructor(title: String = "", text: Text = Texts.emptyText()) {
@@ -54,10 +47,8 @@ open class Chapter : Iterable<Chapter>, Cloneable {
         attributes.put(name, value, false)
     }
 
-    operator fun set(name: String, value: Any?) {
-        attributes.put(name, requireNotNull(value) {
-            "Required value for \"$name\" was null"
-        })
+    operator fun set(name: String, value: Any) {
+        attributes.put(name, value, true)
     }
 
     operator fun get(name: String): Any? = attributes[name]
@@ -135,18 +126,18 @@ open class Chapter : Iterable<Chapter>, Cloneable {
 
     override fun iterator(): Iterator<Chapter> = children.iterator()
 
-    private val cleaners: MutableSet<Cleanable> = HashSet()
+    private val cleaners: MutableSet<(Chapter) -> Unit> = HashSet()
 
-    fun registerClean(clean: Cleanable) {
+    fun registerClean(clean: (Chapter) -> Unit) {
         cleaners.add(clean)
     }
 
-    fun removeClean(clean: Cleanable) {
+    fun removeClean(clean: (Chapter) -> Unit) {
         cleaners.remove(clean)
     }
 
     open fun cleanup() {
-        cleaners.forEach { it.clean(this) }
+        cleaners.forEach { it(this) }
         cleaners.clear()
         attributes.clear()
         children.forEach { it.cleanup() }
@@ -160,7 +151,6 @@ open class Chapter : Iterable<Chapter>, Cloneable {
         if (!cleaned) {
             System.err.printf("*** BUG: Chapter \"$title@${hashCode()}\" not cleaned ***\n")
         }
-
     }
 
     override fun clone(): Chapter {

@@ -20,176 +20,180 @@ package pw.phylame.jem.core
 
 import java.util.*
 
-class Attributes {
-    companion object {
-        const val AUTHOR = "author"
+enum class Attributes(val value: String) : CharSequence by value {
+    AUTHOR("author"),
 
-        const val BINDING = "binding"
+    BINDING("binding"),
 
-        const val COVER = "cover"
+    COVER("cover"),
 
-        const val DATE = "date"
+    DATE("date"),
 
-        const val GENRE = "genre"
+    GENRE("genre"),
 
-        const val INTRO = "intro"
+    INTRO("intro"),
 
-        const val ISBN = "isbn"
+    ISBN("isbn"),
 
-        const val KEYWORDS = "keywords"
+    KEYWORDS("keywords"),
 
-        const val LANGUAGE = "language"
+    LANGUAGE("language"),
 
-        const val PAGES = "pages"
+    PAGES("pages"),
 
-        const val PRICE = "price"
+    PRICE("price"),
 
-        const val PROTAGONIST = "protagonist"
+    PROTAGONIST("protagonist"),
 
-        const val PUBDATE = "pubdate"
+    PUBDATE("pubdate"),
 
-        const val PUBLISHER = "publisher"
+    PUBLISHER("publisher"),
 
-        const val RIGHTS = "rights"
+    RIGHTS("rights"),
 
-        const val SERIES = "series"
+    SERIES("series"),
 
-        const val STATE = "state"
+    STATE("state"),
 
-        const val TITLE = "title"
+    TITLE("title"),
 
-        const val TRANSLATOR = "translator"
+    TRANSLATOR("translator"),
 
-        const val VENDOR = "vendor"
+    VENDOR("vendor"),
 
-        const val WORDS = "words"
-    }
+    WORDS("words")
+}
+
+private fun Chapter.put(name: CharSequence, value: Any?, validation: Boolean = false) {
+    attributes.put(name, requireNotNull(value) {
+        "Attribute $name require not null"
+    }, validation)
 }
 
 var Chapter.author: String
     get() = attributes.get(Attributes.AUTHOR, "")
     set(value) {
-        this[Attributes.AUTHOR] = value
+        put(Attributes.AUTHOR, value, false)
     }
 
 var Chapter.binding: String
     get() = attributes.get(Attributes.BINDING, "")
     set(value) {
-        this[Attributes.BINDING] = value
+        put(Attributes.BINDING, value, false)
     }
 
 var Chapter.cover: Blob?
-    get() = attributes.get(Attributes.COVER, Blob::class.java)
+    get() = attributes.get<Blob?>(Attributes.COVER, null)
     set(value) {
-        this[Attributes.COVER] = value
+        put(Attributes.COVER, value, false)
     }
 
 var Chapter.date: Date?
-    get() = attributes.get(Attributes.DATE, Date::class.java)
+    get() = attributes.get<Date?>(Attributes.DATE, null)
     set(value) {
-        this[Attributes.DATE] = value
+        put(Attributes.DATE, value, false)
     }
 
 var Chapter.genre: String
     get() = attributes.get(Attributes.GENRE, "")
     set(value) {
-        this[Attributes.GENRE] = value
+        put(Attributes.GENRE, value, false)
     }
 
 var Chapter.intro: Text?
-    get() = attributes.get(Attributes.INTRO, Text::class.java)
+    get() = attributes.get<Text?>(Attributes.INTRO, null)
     set(value) {
-        this[Attributes.INTRO] = value
+        put(Attributes.INTRO, value, false)
     }
 
 var Chapter.isbn: String
     get() = attributes.get(Attributes.ISBN, "")
     set(value) {
-        this[Attributes.ISBN] = value
+        put(Attributes.ISBN, value, false)
     }
 
 var Chapter.keywords: String
     get() = attributes.get(Attributes.KEYWORDS, "")
     set(value) {
-        this[Attributes.KEYWORDS] = value
+        put(Attributes.KEYWORDS, value, false)
     }
 
 var Chapter.language: Locale?
-    get() = attributes.get(Attributes.LANGUAGE, Locale::class.java)
+    get() = attributes.get<Locale?>(Attributes.LANGUAGE, null)
     set(value) {
-        this[Attributes.LANGUAGE] = value
+        put(Attributes.LANGUAGE, value, false)
     }
 
 var Chapter.pages: Int?
-    get() = attributes.get(Attributes.PAGES, Int::class.java)
+    get() = attributes.get<Int?>(Attributes.PAGES, null)
     set(value) {
-        this[Attributes.PAGES] = value
+        put(Attributes.PAGES, value, false)
     }
 
 var Chapter.price: Double?
-    get() = attributes.get(Attributes.PRICE, Double::class.java)
+    get() = attributes.get<Double?>(Attributes.PRICE, null)
     set(value) {
-        this[Attributes.PRICE] = value
+        put(Attributes.PRICE, value, false)
     }
 
 var Chapter.protagonist: String
     get() = attributes.get(Attributes.PROTAGONIST, "")
     set(value) {
-        this[Attributes.PROTAGONIST] = value
+        put(Attributes.PROTAGONIST, value, false)
     }
 
 var Chapter.pubdate: Date?
-    get() = attributes.get(Attributes.PUBDATE, Date::class.java)
+    get() = attributes.get<Date?>(Attributes.PUBDATE, null)
     set(value) {
-        this[Attributes.PUBDATE] = value
+        put(Attributes.PUBDATE, value, false)
     }
 
 var Chapter.publisher: String
     get() = attributes.get(Attributes.PUBLISHER, "")
     set(value) {
-        this[Attributes.PUBLISHER] = value
+        put(Attributes.PUBLISHER, value, false)
     }
 
 var Chapter.rights: String
     get() = attributes.get(Attributes.RIGHTS, "")
     set(value) {
-        this[Attributes.RIGHTS] = value
+        put(Attributes.RIGHTS, value, false)
     }
 
 var Chapter.series: String
     get() = attributes.get(Attributes.SERIES, "")
     set(value) {
-        this[Attributes.SERIES] = value
+        put(Attributes.SERIES, value, false)
     }
 
 var Chapter.state: String
     get() = attributes.get(Attributes.STATE, "")
     set(value) {
-        this[Attributes.STATE] = value
+        put(Attributes.STATE, value, false)
     }
 
 var Chapter.title: String
     get() = attributes.get(Attributes.TITLE, "")
     set(value) {
-        this[Attributes.TITLE] = value
+        put(Attributes.TITLE, value, false)
     }
 
 var Chapter.translator: String
     get() = attributes.get(Attributes.TRANSLATOR, "")
     set(value) {
-        this[Attributes.TRANSLATOR] = value
+        put(Attributes.TRANSLATOR, value, false)
     }
 
 var Chapter.vendor: String
     get() = attributes.get(Attributes.VENDOR, "")
     set(value) {
-        this[Attributes.VENDOR] = value
+        put(Attributes.VENDOR, value, false)
     }
 
 var Chapter.words: Int?
-    get() = attributes.get(Attributes.WORDS, Int::class.java)
+    get() = attributes.get<Int?>(Attributes.WORDS, null)
     set(value) {
-        this[Attributes.WORDS] = value
+        put(Attributes.WORDS, value, false)
     }
 
 const val PMAB = "pmab"
@@ -220,19 +224,15 @@ val Chapter.depth: Int
         return depth + 1
     }
 
-interface ChapterFilter {
-    fun accept(chapter: Chapter): Boolean
-}
-
-fun Chapter.find(filter: ChapterFilter, from: Int, recursion: Boolean = false): Chapter? {
+fun Chapter.find(from: Int, recursion: Boolean = false, predicate: (Chapter) -> Boolean): Chapter? {
     var sub: Chapter?
     for (ix in from..size - 1) {
         sub = chapterAt(ix)
-        if (filter.accept(sub)) {
+        if (predicate(sub)) {
             return sub
         }
         if (recursion && sub.isSection()) {
-            sub = sub.find(filter, 0, true)
+            sub = sub.find(0, true, predicate)
             if (sub != null) {
                 return sub
             }
@@ -241,17 +241,18 @@ fun Chapter.find(filter: ChapterFilter, from: Int, recursion: Boolean = false): 
     return null
 }
 
-fun Chapter.select(filter: ChapterFilter, result: MutableList<Chapter>, limit: Int, recursion: Boolean = false): Int {
+fun Chapter.select(result: MutableList<Chapter>, limit: Int, recursion: Boolean = false,
+                   predicate: (Chapter) -> Boolean): Int {
     var count = 0
     for (sub in this) {
-        if (filter.accept(sub)) {
+        if (predicate(sub)) {
             result.add(sub)
-            if (++count == limit) {
+            if (count++ == limit) {
                 break
             }
         }
         if (recursion && sub.isSection()) {
-            count += sub.select(filter, result, limit, true)
+            count += sub.select(result, limit, true, predicate)
         }
     }
     return count

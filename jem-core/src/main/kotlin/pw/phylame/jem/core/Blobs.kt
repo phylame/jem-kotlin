@@ -27,26 +27,26 @@ interface Blob {
 
     val mime: String
 
-    fun openStream(): InputStream
+    fun inputStream(): InputStream
 
-    val bytes: ByteArray get() = openStream().readBytes()
+    val bytes: ByteArray get() = inputStream().readBytes()
 
-    fun writeTo(out: OutputStream): Long {
-        openStream().buffered().use {
-            return it.copyTo(out)
-        }
-    }
+    fun writeTo(out: OutputStream): Long =
+            inputStream().buffered().use {
+                return it.copyTo(out)
+            }
 }
 
 abstract class AbstractBlob(private val _mime: String?) : Blob {
     override val mime: String by lazy {
-        return@lazy Paths.mimeOrDetect(name, _mime)
+        Paths.mimeOrDetect(name, _mime)
     }
 
     override fun toString(): String = "$name;mime=$mime"
 }
 
-class FileBlob internal constructor(val file: File, mime: String?) : AbstractBlob(mime) {
+class FileBlob
+internal constructor(val file: File, mime: String?) : AbstractBlob(mime) {
     init {
         if (!file.exists()) {
             throw FileNotFoundException("No such file: $file")
@@ -58,10 +58,11 @@ class FileBlob internal constructor(val file: File, mime: String?) : AbstractBlo
 
     override val name: String = file.path
 
-    override fun openStream(): InputStream = file.inputStream()
+    override fun inputStream(): InputStream = file.inputStream()
 }
 
-class ZipBlob internal constructor(val zip: ZipFile, val entry: String, mime: String?) : AbstractBlob(mime) {
+class ZipBlob
+internal constructor(val zip: ZipFile, val entry: String, mime: String?) : AbstractBlob(mime) {
     init {
         if (zip.getEntry(entry) == null) {
             throw IOException("No such entry in ZIP: $entry")
@@ -70,14 +71,14 @@ class ZipBlob internal constructor(val zip: ZipFile, val entry: String, mime: St
 
     override val name: String = entry
 
-    override fun openStream(): InputStream = zip.getInputStream(zip.getEntry(entry))
+    override fun inputStream(): InputStream = zip.getInputStream(zip.getEntry(entry))
 
     override fun toString(): String = "zip://${zip.name}!${super.toString()}"
 }
 
 class BlockBlob
-internal constructor(override val name: String, val file: RandomAccessFile, var offset: Long, var size: Long,
-                     mime: String?) : AbstractBlob(mime) {
+internal constructor(override val name: String, val file: RandomAccessFile,
+                     var offset: Long, var size: Long, mime: String?) : AbstractBlob(mime) {
     init {
         if (size > (file.length() - offset)) {
             throw IndexOutOfBoundsException(
@@ -85,9 +86,8 @@ internal constructor(override val name: String, val file: RandomAccessFile, var 
         }
     }
 
-    override fun openStream(): InputStream {
-        file.seek(offset)
-        return RAFInputStream(file, size)
+    override fun inputStream(): InputStream {
+        return file.clipBlock(offset, size)
     }
 
     override val bytes: ByteArray
@@ -110,17 +110,20 @@ internal constructor(override val name: String, val file: RandomAccessFile, var 
     override fun toString(): String = "block://${super.toString()};offset=$offset;size=$size"
 }
 
-class URLBlob internal constructor(val url: URL, mime: String?) : AbstractBlob(mime) {
+class URLBlob
+internal constructor(val url: URL, mime: String?) : AbstractBlob(mime) {
     override val name: String = url.path
 
-    override fun openStream(): InputStream = url.openStream()
+    override fun inputStream(): InputStream = url.openStream()
 
     override fun toString(): String = "${url.toString()};mime=$mime"
 }
 
 class BytesBlob
-internal constructor(override val name: String, val data: ByteArray, mime: String?) : AbstractBlob(mime) {
-    override fun openStream(): InputStream = bytes.inputStream()
+internal constructor(override val name: String, val data: ByteArray, mime: String?) :
+        AbstractBlob(mime) {
+
+    override fun inputStream(): InputStream = bytes.inputStream()
 
     override val bytes: ByteArray get() = data.copyOf(data.size)
 
@@ -132,19 +135,22 @@ internal constructor(override val name: String, val data: ByteArray, mime: Strin
     override fun toString(): String = "bytes://${super.toString()}"
 }
 
-class Blobs {
-    companion object {
-        fun forFile(file: File, mime: String? = null): Blob = FileBlob(file, mime)
+object Blobs {
+    fun forFile(file: File, mime: String? = null): Blob = FileBlob(file, mime)
 
-        fun forZip(zip: ZipFile, entry: String, mime: String? = null): Blob = ZipBlob(zip, entry, mime)
+    fun forZip(zip: ZipFile, entry: String, mime: String? = null): Blob = ZipBlob(zip, entry, mime)
 
-        fun forBlock(name: String, file: RandomAccessFile, offset: Long, size: Long, mime: String? = null):
-                BlockBlob = BlockBlob(name, file, offset, size, mime)
+    fun forBlock(name: String, file: RandomAccessFile, offset: Long, size: Long, mime: String? = null):
+            BlockBlob = BlockBlob(name, file, offset, size, mime)
 
-        fun forURL(url: URL, mime: String? = null): Blob = URLBlob(url, mime)
+    fun forURL(url: URL, mime: String? = null): Blob = URLBlob(url, mime)
 
-        fun forBytes(name: String, data: ByteArray, mime: String? = null): Blob = BytesBlob(name, data, mime)
+    fun forBytes(name: String, data: ByteArray, mime: String? = null): Blob =
+            BytesBlob(name, data, mime)
 
-        fun emptyFile(mime: String? = null): Blob = forBytes("_empty_", byteArrayOf(0), mime)
-    }
+    fun emptyFile(name: String = "empty", mime: String? = null): Blob = forBytes(name, byteArrayOf(0), mime)
+}
+
+fun main(args: Array<String>) {
+    println(Blobs.emptyFile())
 }

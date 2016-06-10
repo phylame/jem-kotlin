@@ -43,11 +43,7 @@ class UnsupportedFormatException : JemException {
 
 class ImplementationManager<T>(val type: Class<T>, val reusable: Boolean = true) {
     private val implementations = HashMap<String, ImpHolder>()
-    private val caches: MutableMap<String, T>?
-
-    init {
-        caches = if (reusable) HashMap() else null
-    }
+    private val caches: MutableMap<String, T>? = if (reusable) HashMap() else null
 
     fun register(name: String, path: String) {
         if (name.isEmpty()) {
@@ -102,7 +98,8 @@ class ImplementationManager<T>(val type: Class<T>, val reusable: Boolean = true)
         return obj
     }
 
-    private inner class ImpHolder(internal var path: String? = null, internal var clazz: Class<out T>? = null) {
+    private inner class ImpHolder(var path: String? = null, var clazz: Class<out T>? = null) {
+        @Suppress("UNCHECKED_CAST")
         fun instantiate(): T? {
             if (clazz != null) {
                 return clazz!!.newInstance()
@@ -120,65 +117,39 @@ class ImplementationManager<T>(val type: Class<T>, val reusable: Boolean = true)
     }
 }
 
-open class VariantMap
-constructor(private var map: MutableMap<String, Any> = HashMap(),
-            var validator: ((String, Any) -> Unit)? = null) :
-        Iterable<Map.Entry<String, Any>>, Cloneable {
+open class VariantMap(
+        m: MutableMap<CharSequence, Any> = HashMap(),
+        var validator: ((CharSequence, Any) -> Unit)? = null) :
+        Cloneable, MutableMap<CharSequence, Any> by m {
 
-    open fun put(key: String, value: Any, validation: Boolean = false): VariantMap {
-        if (validation) {
+    inline fun <reified T> get(key: CharSequence, defaultValue: T): T {
+        val value = this[key]
+        return if (value != null && value is T) value else defaultValue
+    }
+
+    fun put(key: CharSequence, value: Any, validation: Boolean = false): Any? {
+        if (validation)
             validator?.invoke(key, value)
-        }
-        map[key] = value
-        return this
+        return put(key, value)
     }
 
-    operator fun set(key: String, value: Any) {
-        put(key, value)
-    }
-
-    fun update(map: Map<String, Any>, validation: Boolean = false): VariantMap {
-        map.forEach {
+    fun putAll(from: Map<out CharSequence, Any>, validation: Boolean = false) {
+        from.forEach {
             put(it.key, it.value, validation)
         }
-        return this
     }
 
-    fun update(rhs: VariantMap, validation: Boolean = false): VariantMap = update(rhs.map, validation)
-
-    operator fun contains(key: String): Boolean = key in map
-
-    operator fun get(key: String, defaultValue: Any? = null): Any? = map[key] ?: defaultValue
-
-    fun get(key: String, defaultString: String = ""): String = map[key]?.toString() ?: defaultString
-
-    fun <T> get(key: String, type: Class<T>, defaultValue: T? = null): T? {
-        val o = map[key]
-        return if (o != null && type.isInstance(o)) o as T else defaultValue
+    fun putAll(from: VariantMap, validation: Boolean = false) {
+        from.forEach {
+            put(it.key, it.value, validation)
+        }
     }
-
-    fun remove(key: String): Any? = map.remove(key)
-
-    fun clear(): VariantMap {
-        map.clear()
-        return this
-    }
-
-    val size: Int get() = map.size
-
-    val keys: Set<String> get() = map.keys
-
-    val items: Set<Map.Entry<String, Any>> get() = map.entries
-
-    override fun iterator(): Iterator<Map.Entry<String, Any>> = map.iterator()
 
     public override fun clone(): VariantMap {
-        val result = super.clone() as VariantMap
-        result.map = HashMap(map)
-        return result
+        val dump = VariantMap()
+        dump.putAll(this)
+        return dump
     }
-
-    override fun toString(): String = map.toString()
 }
 
 val Throwable.stackMessage: String
@@ -188,87 +159,99 @@ val Throwable.stackMessage: String
         return w.toString()
     }
 
-class Log {
-    companion object {
-        // trace
-        fun t(tag: String, msg: String, vararg args: Any) {
-            println(makeText(tag, "t", msg, args))
-        }
+object Log {
+    var normalOutput: (String) -> Unit = ::println
+    var errorOutput: (String) -> Unit = { System.err?.println(it) }
 
-        fun t(tag: String, t: Throwable) {
-            t(tag, t.stackMessage)
-        }
-
-        // debug
-        fun d(tag: String, msg: String, vararg args: Any) {
-            println(makeText(tag, "d", msg, args))
-        }
-
-        fun d(tag: String, t: Throwable) {
-            d(tag, t.stackMessage)
-        }
-
-        // error
-        fun e(tag: String, msg: String, vararg args: Any) {
-            System.err?.println(makeText(tag, "e", msg, args))
-        }
-
-        fun e(tag: String, t: Throwable) {
-            e(tag, t.stackMessage)
-        }
-
-        private fun makeText(tag: String, level: String, msg: String, vararg args: Any): String =
-                "[${Thread.currentThread().name}] $level/$tag: ${MessageFormat.format(msg, args)}"
+    // trace
+    fun t(tag: String, msg: String, vararg args: Any) {
+        normalOutput(makeText(tag, "t", msg, args))
     }
-}
 
-const val FILE = "file"
-const val TEXT = "text"
-const val STRING = "str"
-const val INTEGER = "int"
-const val REAL = "real"
-const val LOCALE = "locale"
-const val DATETIME = "datetime"
-const val BOOLEAN = "bool"
-
-fun supportedTypes(): Array<String> = arrayOf(FILE, TEXT, STRING, INTEGER, REAL, LOCALE, DATETIME, BOOLEAN)
-
-private val variantTypes: MutableMap<Class<*>, String> = HashMap()
-
-fun mapVariantType(clazz: Class<*>, type: String) {
-    variantTypes[clazz] = type
-}
-
-fun typeOfVariant(o: Any): String {
-    val clazz = o.javaClass
-    val name = variantTypes[clazz]
-    if (name != null) {
-        return name
+    fun t(tag: String, t: Throwable) {
+        t(tag, t.stackMessage)
     }
-    if (Text::class.java.isAssignableFrom(clazz)) {
-        return TEXT
-    } else if (Blob::class.java.isAssignableFrom(clazz)) {
-        return FILE
-    } else {
-        return clazz.name
+
+    // debug
+    fun d(tag: String, msg: String, vararg args: Any) {
+        normalOutput(makeText(tag, "d", msg, args))
     }
+
+    fun d(tag: String, t: Throwable) {
+        d(tag, t.stackMessage)
+    }
+
+    // error
+    fun e(tag: String, msg: String, vararg args: Any) {
+        errorOutput(makeText(tag, "e", msg, args))
+    }
+
+    fun e(tag: String, t: Throwable) {
+        e(tag, t.stackMessage)
+    }
+
+    private fun makeText(tag: String, level: String, msg: String, vararg args: Any): String =
+            "[${Thread.currentThread().name}] $level/$tag: ${MessageFormat.format(msg, args)}"
 }
 
-fun defaultOfType(type: String): Any = when (type) {
-    STRING -> ""
-    TEXT -> Texts.emptyText(Texts.PLAIN)
-    FILE -> Blobs.emptyFile(Paths.UNKNOWN_MIME)
-    DATETIME -> Date()
-    LOCALE -> Locale.getDefault()
-    INTEGER -> 0
-    REAL -> 0.0
-    BOOLEAN -> false
-    else -> ""
-}
+object Variants {
+    const val BLOB = "blob"
+    const val TEXT = "text"
+    const val STRING = "str"
+    const val INTEGER = "int"
+    const val REAL = "real"
+    const val LOCALE = "locale"
+    const val DATETIME = "datetime"
+    const val BOOLEAN = "bool"
 
-fun formatVariant(o: Any): CharSequence = when (o) {
-    is Text -> o.text
-    is Date -> SimpleDateFormat("yy-M-d").format(o)
-    is Locale -> o.displayName
-    else -> o.toString()
+    init {
+        mapType(Byte::class.java, INTEGER)
+        mapType(Short::class.java, INTEGER)
+        mapType(Int::class.java, INTEGER)
+        mapType(Long::class.java, INTEGER)
+        mapType(Float::class.java, REAL)
+        mapType(Double::class.java, REAL)
+        mapType(Boolean::class.java, BOOLEAN)
+    }
+
+    fun supportedTypes(): Array<String> = arrayOf(BLOB, TEXT, STRING, INTEGER, REAL, LOCALE, DATETIME, BOOLEAN)
+
+    private val variantTypes: MutableMap<Class<*>, String> = HashMap()
+
+    fun mapType(clazz: Class<*>, type: String) {
+        variantTypes[clazz] = type
+    }
+
+    fun typeOf(o: Any): String =
+            variantTypes.getOrElse(o.javaClass) {
+                when (o) {
+                    is CharSequence -> STRING
+                    is Text -> TEXT
+                    is Blob -> BLOB
+                    is Date -> DATETIME
+                    is Locale -> LOCALE
+                    else -> STRING
+                }
+            }
+
+    fun defaultFor(type: String): Any =
+            when (type) {
+                STRING -> ""
+                TEXT -> Texts.emptyText()
+                BLOB -> Blobs.emptyFile()
+                DATETIME -> Date()
+                LOCALE -> Locale.getDefault()
+                INTEGER -> 0
+                REAL -> 0.0
+                BOOLEAN -> false
+                else -> ""
+            }
+
+    fun format(o: Any): CharSequence =
+            when (o) {
+                is Text -> o.text
+                is Date -> SimpleDateFormat("yy-M-d").format(o)
+                is Locale -> o.displayName
+                else -> o.toString()
+            }
 }

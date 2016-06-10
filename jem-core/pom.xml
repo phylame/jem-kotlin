@@ -13,7 +13,7 @@
     </parent>
 
     <artifactId>jem-core</artifactId>
-    <packaging>jar</packaging>
+    <description>Core package of Jem</description>
 
     <dependencies>
         <dependency>

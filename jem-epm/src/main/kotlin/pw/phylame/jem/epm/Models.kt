@@ -1,8 +1,6 @@
 /*
  * Copyright 2014-2016 Peng Wan <phylame@163.com>
  *
- * This file is part of Jem.
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,13 +14,24 @@
  * limitations under the License.
  */
 
-package pw.phylame.jem.core
+package pw.phylame.jem.epm
 
-const val NAME = "Jem"
-const val FULL_NAME = "PW's E-book Management for Java"
-const val VERSION = "3.0"
-const val AUTHOR_EMAIL = "phylame@163.com"
-const val DESCRIPTION = "Java e-books processing toolkit"
-const val VENDOR = "Peng Wan, PW"
-const val LICENSE = "Apache License, Version 2.0"
-const val SOURCE = "https://github.com/phylame/jem"
+import pw.phylame.jem.core.Book
+import pw.phylame.jem.core.JemException
+import java.io.File
+import java.io.IOException
+
+interface Parser {
+    val name: String
+
+    @Throws(IOException::class, JemException::class)
+    fun parse(file: File, args: Map<String, Any>): Book
+}
+
+interface Maker {
+    val name: String
+
+    @Throws(IOException::class, JemException::class)
+    fun make(book: Book, file: File, args: Map<String, Any>)
+}
+

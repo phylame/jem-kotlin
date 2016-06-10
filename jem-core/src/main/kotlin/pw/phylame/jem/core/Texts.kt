@@ -20,7 +20,6 @@ package pw.phylame.jem.core
 
 import java.io.BufferedReader
 import java.io.Writer
-import java.nio.charset.Charset
 
 interface Text : Iterable<String> {
     val type: CharSequence
@@ -29,11 +28,11 @@ interface Text : Iterable<String> {
 
     val lines: List<String> get() = text.lines()
 
-    fun writeTo(out: Writer): Int {
+    fun writeTo(out: Writer): Long {
         val str = text
         out.write(str.toString())
         out.flush()
-        return str.length
+        return str.length.toLong()
     }
 
     override fun iterator(): Iterator<String> = lines.iterator()
@@ -49,25 +48,24 @@ internal constructor(override val text: CharSequence, type: CharSequence) : Abst
 class BlobText
 internal constructor(val blob: Blob, val encoding: String, type: CharSequence) : AbstractText(type) {
 
-    private fun reader(): BufferedReader = blob.openStream().bufferedReader(Charset.forName(encoding))
+    private fun reader(): BufferedReader = blob.inputStream().bufferedReader(encoding)
 
     override val text: CharSequence get() = reader().readText()
 
     override val lines: List<String> get() = reader().readLines()
 
-    override fun writeTo(out: Writer): Int = reader().copyTo(out).toInt()
+    override fun writeTo(out: Writer): Long = reader().copyTo(out)
 }
 
-class Texts {
-    companion object {
-        const val HTML = "html"
+object Texts {
+    const val HTML = "html"
 
-        const val PLAIN = "plain"
+    const val PLAIN = "plain"
 
-        fun forString(str: CharSequence, type: CharSequence = PLAIN): Text = RawText(str, type)
+    fun forString(str: CharSequence, type: CharSequence = PLAIN): Text = RawText(str, type)
 
-        fun forBlob(blob: Blob, enc: String, type: CharSequence = PLAIN): Text = BlobText(blob, enc, type)
+    fun forBlob(blob: Blob, encoding: String, type: CharSequence = PLAIN): Text =
+            BlobText(blob, encoding, type)
 
-        fun emptyText(type: CharSequence = PLAIN): Text = forString("", type)
-    }
+    fun emptyText(type: CharSequence = PLAIN): Text = forString("", type)
 }

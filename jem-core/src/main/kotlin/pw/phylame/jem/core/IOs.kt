@@ -18,76 +18,98 @@
 
 package pw.phylame.jem.core
 
-import java.io.ByteArrayOutputStream
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.RandomAccessFile
+import java.io.*
 import java.net.URL
+import java.nio.charset.Charset
+import java.security.AccessController
+import java.security.PrivilegedAction
 import java.util.*
 
-class Paths {
-    companion object {
-        fun split(path: String): IntArray {
-            var extPos = path.length
-            var sepPos = extPos - 1
-            while (sepPos >= 0) {
-                val ch = path[sepPos]
-                if (ch == '.') {
-                    extPos = sepPos
-                } else if (ch == '/' || ch == '\\') {
-                    break
-                }
-                --sepPos
+object Paths {
+    data class SplitResult(val separatorIndex: Int, val extensionIndex: Int)
+
+    fun split(path: String): SplitResult {
+        var extpos = path.length
+        var seppos = extpos - 1
+        while (seppos >= 0) {
+            val ch = path[seppos]
+            if (ch == '.') {
+                extpos = seppos
+            } else if (ch == '/' || ch == '\\') {
+                break
             }
-            return intArrayOf(sepPos, extPos)
+            seppos--
         }
-
-        fun fullName(path: String): String {
-            val index = split(path)[0]
-            return path.substring(if (index != 0) index + 1 else index)
-        }
-
-        fun baseName(path: String): String {
-            val indexes = split(path)
-            return path.substring(indexes[0] + 1, indexes[1])
-        }
-
-        fun extensionName(path: String): String {
-            val index = split(path)[1]
-            return if (index != path.length) path.substring(index + 1) else ""
-        }
-
-        private const val MIME_MAPPING_FILE = "mime.properties"
-
-        private val mimeMap: MutableMap<String, String> by lazy {
-            val map = HashMap<String, String>()
-            val url = Paths::class.java.getResource(MIME_MAPPING_FILE)
-            if (url != null) {
-                loadProperties(url, map)
-            }
-            return@lazy map
-        }
-
-        fun mapMime(extension: String, mime: String) {
-            mimeMap.put(extension, mime)
-        }
-
-        const val UNKNOWN_MIME = "application/octet-stream"
-
-        fun mimeFor(name: String): String {
-            if (name.isEmpty()) {
-                return ""
-            }
-            val ext = extensionName(name)
-            if (ext.isEmpty()) {
-                return UNKNOWN_MIME
-            }
-            return mimeMap[ext] ?: UNKNOWN_MIME
-        }
-
-        internal fun mimeOrDetect(path: String, mime: String?): String =
-                if (mime == null || mime.isEmpty()) mimeFor(path) else mime
+        return SplitResult(seppos, extpos)
     }
+
+    fun fullName(path: String): String {
+        val seppos = split(path).separatorIndex
+        return path.substring(if (seppos != 0) seppos + 1 else seppos)
+    }
+
+    fun baseName(path: String): String {
+        val (seppos, extpos) = split(path)
+        return path.substring(seppos + 1, extpos)
+    }
+
+    fun extensionName(path: String): String {
+        val seppos = split(path).separatorIndex
+        return if (seppos != path.length) path.substring(seppos + 1) else ""
+    }
+
+    private const val MIME_MAPPING_FILE = "mime.properties"
+
+    private val mimeMap: MutableMap<String, String> by lazy {
+        val map = HashMap<String, String>()
+        val url = Paths::class.java.getResource(MIME_MAPPING_FILE)
+        if (url != null) {
+            loadProperties(url, map)
+        }
+        map
+    }
+
+    fun mapMime(extension: String, mime: String) {
+        mimeMap.put(extension, mime)
+    }
+
+    const val UNKNOWN_MIME = "application/octet-stream"
+
+    fun mimeFor(name: String): String {
+        if (name.isEmpty()) {
+            return ""
+        }
+        val ext = extensionName(name)
+        if (ext.isEmpty()) {
+            return UNKNOWN_MIME
+        }
+        return mimeMap[ext] ?: UNKNOWN_MIME
+    }
+
+    fun mimeOrDetect(path: String, mime: String?): String =
+            if (mime == null || mime.isEmpty()) mimeFor(path) else mime
+}
+
+fun contextClassLoader(): ClassLoader? {
+    return AccessController.doPrivileged(PrivilegedAction {
+        var classLoader: ClassLoader? = null
+        try {
+            classLoader = Thread.currentThread().contextClassLoader
+        } catch (ex: SecurityException) {
+            // ignore
+        }
+        classLoader
+    })
+}
+
+fun resourcesForPath(name: String, loader: ClassLoader? = null): Enumeration<URL>? {
+    return AccessController.doPrivileged(PrivilegedAction {
+        try {
+            loader?.getResources(name) ?: ClassLoader.getSystemResources(name)
+        } catch (e: IOException) {
+            null
+        }
+    })
 }
 
 fun loadProperties(url: URL, map: MutableMap<String, String>): Int {
@@ -100,6 +122,9 @@ fun loadProperties(url: URL, map: MutableMap<String, String>): Int {
     }
     return prop.size
 }
+
+fun InputStream.bufferedReader(encoding: String): BufferedReader =
+        reader(Charset.forName(encoding)).buffered()
 
 fun RandomAccessFile.copyTo(out: OutputStream, bufferSize: Int = DEFAULT_BUFFER_SIZE): Long {
     var bytesCopied: Long = 0
@@ -131,8 +156,13 @@ fun RandomAccessFile.readBytes(estimatedSize: Int = DEFAULT_BUFFER_SIZE): ByteAr
     return buffer.toByteArray()
 }
 
+fun RandomAccessFile.clipBlock(offset: Long = filePointer, size: Long = length()): InputStream =
+        RAFInputStream(this, offset, size)
+
 class RAFInputStream
-constructor(private val source: RandomAccessFile, offset: Long, size: Long) : InputStream() {
+constructor(val source: RandomAccessFile,
+            val offset: Long = source.filePointer,
+            val size: Long = source.length()) : InputStream() {
     private val endpos: Long
     private var curpos: Long = 0
 
@@ -146,18 +176,16 @@ constructor(private val source: RandomAccessFile, offset: Long, size: Long) : In
         if (endpos > length) {
             throw IllegalArgumentException("offset + size > length of source")
         }
+        source.seek(curpos)
     }
 
-    constructor(source: RandomAccessFile, size: Long) : this(source, source.filePointer, size)
-
-    override fun read(): Int {
-        if (curpos < endpos) {
-            ++curpos
-            return source.read()
-        } else {
-            return -1
-        }
-    }
+    override fun read(): Int =
+            if (curpos < endpos) {
+                curpos++
+                source.read()
+            } else {
+                -1
+            }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
         if (off < 0 || len < 0 || len > b.size - off) {
@@ -184,7 +212,5 @@ constructor(private val source: RandomAccessFile, offset: Long, size: Long) : In
         return len
     }
 
-    override fun available(): Int {
-        return (endpos - curpos).toInt()
-    }
+    override fun available(): Int = (endpos - curpos).toInt()
 }
