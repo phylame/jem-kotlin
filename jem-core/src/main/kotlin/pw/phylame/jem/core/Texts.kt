@@ -24,12 +24,12 @@ import java.io.Writer
 interface Text : Iterable<String> {
     val type: CharSequence
 
-    val text: CharSequence
+    val string: CharSequence
 
-    val lines: List<String> get() = text.lines()
+    val lines: List<String> get() = string.lines()
 
     fun writeTo(out: Writer): Long {
-        val str = text
+        val str = string
         out.write(str.toString())
         out.flush()
         return str.length.toLong()
@@ -39,18 +39,18 @@ interface Text : Iterable<String> {
 }
 
 abstract class AbstractText(override val type: CharSequence) : Text {
-    override fun toString(): String = text.toString()
+    override fun toString(): String = string.toString()
 }
 
 class RawText
-internal constructor(override val text: CharSequence, type: CharSequence) : AbstractText(type)
+internal constructor(override val string: CharSequence, type: CharSequence) : AbstractText(type)
 
 class BlobText
 internal constructor(val blob: Blob, val encoding: String, type: CharSequence) : AbstractText(type) {
 
     private fun reader(): BufferedReader = blob.inputStream().bufferedReader(encoding)
 
-    override val text: CharSequence get() = reader().readText()
+    override val string: CharSequence get() = reader().readText()
 
     override val lines: List<String> get() = reader().readLines()
 

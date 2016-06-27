@@ -96,7 +96,7 @@ fun contextClassLoader(): ClassLoader? {
         try {
             classLoader = Thread.currentThread().contextClassLoader
         } catch (ex: SecurityException) {
-            // ignore
+            Log.d("Cannot get context class loader", ex)
         }
         classLoader
     })
@@ -112,16 +112,20 @@ fun resourcesForPath(name: String, loader: ClassLoader? = null): Enumeration<URL
     })
 }
 
-fun loadProperties(url: URL, map: MutableMap<String, String>): Int {
-    val prop = Properties()
-    url.openStream().buffered().use {
-        prop.load(it)
-    }
-    for ((k, v) in prop) {
-        map[k.toString()] = v.toString()
-    }
-    return prop.size
-}
+fun loadProperties(url: URL): Properties =
+        Properties().apply {
+            url.openStream().buffered().use {
+                load(it)
+            }
+        }
+
+fun loadProperties(url: URL, map: MutableMap<String, String>): Int =
+        loadProperties(url).run {
+            for ((k, v) in this) {
+                map[k.toString()] = v.toString()
+            }
+            size
+        }
 
 fun InputStream.bufferedReader(encoding: String): BufferedReader =
         reader(Charset.forName(encoding)).buffered()

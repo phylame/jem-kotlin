@@ -64,136 +64,136 @@ enum class Attributes(val value: String) : CharSequence by value {
     WORDS("words")
 }
 
-private fun Chapter.put(name: CharSequence, value: Any?, validation: Boolean = false) {
+private fun Chapter.put(name: CharSequence, value: Any?) {
     attributes.put(name, requireNotNull(value) {
         "Attribute $name require not null"
-    }, validation)
+    }, false)
 }
 
 var Chapter.author: String
     get() = attributes.get(Attributes.AUTHOR, "")
     set(value) {
-        put(Attributes.AUTHOR, value, false)
+        put(Attributes.AUTHOR, value)
     }
 
 var Chapter.binding: String
     get() = attributes.get(Attributes.BINDING, "")
     set(value) {
-        put(Attributes.BINDING, value, false)
+        put(Attributes.BINDING, value)
     }
 
 var Chapter.cover: Blob?
     get() = attributes.get<Blob?>(Attributes.COVER, null)
     set(value) {
-        put(Attributes.COVER, value, false)
+        put(Attributes.COVER, value)
     }
 
 var Chapter.date: Date?
     get() = attributes.get<Date?>(Attributes.DATE, null)
     set(value) {
-        put(Attributes.DATE, value, false)
+        put(Attributes.DATE, value)
     }
 
 var Chapter.genre: String
     get() = attributes.get(Attributes.GENRE, "")
     set(value) {
-        put(Attributes.GENRE, value, false)
+        put(Attributes.GENRE, value)
     }
 
 var Chapter.intro: Text?
     get() = attributes.get<Text?>(Attributes.INTRO, null)
     set(value) {
-        put(Attributes.INTRO, value, false)
+        put(Attributes.INTRO, value)
     }
 
 var Chapter.isbn: String
     get() = attributes.get(Attributes.ISBN, "")
     set(value) {
-        put(Attributes.ISBN, value, false)
+        put(Attributes.ISBN, value)
     }
 
 var Chapter.keywords: String
     get() = attributes.get(Attributes.KEYWORDS, "")
     set(value) {
-        put(Attributes.KEYWORDS, value, false)
+        put(Attributes.KEYWORDS, value)
     }
 
 var Chapter.language: Locale?
     get() = attributes.get<Locale?>(Attributes.LANGUAGE, null)
     set(value) {
-        put(Attributes.LANGUAGE, value, false)
+        put(Attributes.LANGUAGE, value)
     }
 
 var Chapter.pages: Int?
     get() = attributes.get<Int?>(Attributes.PAGES, null)
     set(value) {
-        put(Attributes.PAGES, value, false)
+        put(Attributes.PAGES, value)
     }
 
 var Chapter.price: Double?
     get() = attributes.get<Double?>(Attributes.PRICE, null)
     set(value) {
-        put(Attributes.PRICE, value, false)
+        put(Attributes.PRICE, value)
     }
 
 var Chapter.protagonist: String
     get() = attributes.get(Attributes.PROTAGONIST, "")
     set(value) {
-        put(Attributes.PROTAGONIST, value, false)
+        put(Attributes.PROTAGONIST, value)
     }
 
 var Chapter.pubdate: Date?
     get() = attributes.get<Date?>(Attributes.PUBDATE, null)
     set(value) {
-        put(Attributes.PUBDATE, value, false)
+        put(Attributes.PUBDATE, value)
     }
 
 var Chapter.publisher: String
     get() = attributes.get(Attributes.PUBLISHER, "")
     set(value) {
-        put(Attributes.PUBLISHER, value, false)
+        put(Attributes.PUBLISHER, value)
     }
 
 var Chapter.rights: String
     get() = attributes.get(Attributes.RIGHTS, "")
     set(value) {
-        put(Attributes.RIGHTS, value, false)
+        put(Attributes.RIGHTS, value)
     }
 
 var Chapter.series: String
     get() = attributes.get(Attributes.SERIES, "")
     set(value) {
-        put(Attributes.SERIES, value, false)
+        put(Attributes.SERIES, value)
     }
 
 var Chapter.state: String
     get() = attributes.get(Attributes.STATE, "")
     set(value) {
-        put(Attributes.STATE, value, false)
+        put(Attributes.STATE, value)
     }
 
 var Chapter.title: String
     get() = attributes.get(Attributes.TITLE, "")
     set(value) {
-        put(Attributes.TITLE, value, false)
+        put(Attributes.TITLE, value)
     }
 
 var Chapter.translator: String
     get() = attributes.get(Attributes.TRANSLATOR, "")
     set(value) {
-        put(Attributes.TRANSLATOR, value, false)
+        put(Attributes.TRANSLATOR, value)
     }
 
 var Chapter.vendor: String
     get() = attributes.get(Attributes.VENDOR, "")
     set(value) {
-        put(Attributes.VENDOR, value, false)
+        put(Attributes.VENDOR, value)
     }
 
 var Chapter.words: Int?
     get() = attributes.get<Int?>(Attributes.WORDS, null)
     set(value) {
-        put(Attributes.WORDS, value, false)
+        put(Attributes.WORDS, value)
     }
 
 const val PMAB = "pmab"

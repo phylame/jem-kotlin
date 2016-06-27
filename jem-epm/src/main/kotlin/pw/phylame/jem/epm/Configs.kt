@@ -16,22 +16,7 @@
 
 package pw.phylame.jem.epm
 
-import pw.phylame.jem.core.Book
-import pw.phylame.jem.core.JemException
-import java.io.File
-import java.io.IOException
-
-interface Parser {
-    val name: String
-
-    @Throws(IOException::class, JemException::class)
-    fun parse(file: File, args: Map<String, Any>): Book
+interface CommonConfig {
+    fun adjust() {
+    }
 }
-
-interface Maker {
-    val name: String
-
-    @Throws(IOException::class, JemException::class)
-    fun make(book: Book, file: File, args: Map<String, Any>)
-}
-

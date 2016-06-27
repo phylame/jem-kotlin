@@ -41,82 +41,6 @@ class UnsupportedFormatException : JemException {
     constructor(cause: Throwable) : super(cause)
 }
 
-class ImplementationManager<T>(val type: Class<T>, val reusable: Boolean = true) {
-    private val implementations = HashMap<String, ImpHolder>()
-    private val caches: MutableMap<String, T>? = if (reusable) HashMap() else null
-
-    fun register(name: String, path: String) {
-        if (name.isEmpty()) {
-            throw IllegalArgumentException("name cannot be empty")
-        }
-        if (path.isEmpty()) {
-            throw IllegalArgumentException("path cannot be empty")
-        }
-        val imp = implementations[name]
-        if (imp != null) {
-            imp.path = path
-            caches?.remove(name)
-        } else {
-            implementations[name] = ImpHolder(path = path)
-        }
-    }
-
-    fun register(name: String, clazz: Class<out T>) {
-        if (name.isEmpty()) {
-            throw IllegalArgumentException("name cannot be empty")
-        }
-        val imp = implementations[name]
-        if (imp != null) {
-            imp.clazz = clazz
-            caches?.remove(name)
-        } else {
-            implementations[name] = ImpHolder(clazz = clazz)
-        }
-    }
-
-    operator fun contains(name: String): Boolean = name in implementations
-
-    fun remove(name: String) {
-        implementations.remove(name)
-        caches?.remove(name)
-    }
-
-    val names: Set<String> get() = implementations.keys
-
-    fun getInstance(name: String): T? {
-        var obj = caches?.get(name)
-        if (obj != null) {
-            return obj
-        }
-        val imp = implementations[name]
-        if (imp != null) {
-            obj = imp.instantiate()
-            if (obj != null) {
-                caches?.put(name, obj)
-            }
-        }
-        return obj
-    }
-
-    private inner class ImpHolder(var path: String? = null, var clazz: Class<out T>? = null) {
-        @Suppress("UNCHECKED_CAST")
-        fun instantiate(): T? {
-            if (clazz != null) {
-                return clazz!!.newInstance()
-            }
-            if (path == null) {
-                throw IllegalStateException("No path or clazz specified")
-            }
-            val clazz = Class.forName(path)
-            if (!type.isAssignableFrom(clazz)) {
-                return null
-            }
-            this.clazz = clazz as Class<T>
-            return clazz.newInstance()
-        }
-    }
-}
-
 open class VariantMap(
         m: MutableMap<CharSequence, Any> = HashMap(),
         var validator: ((CharSequence, Any) -> Unit)? = null) :
@@ -214,7 +138,8 @@ object Variants {
         mapType(Boolean::class.java, BOOLEAN)
     }
 
-    fun supportedTypes(): Array<String> = arrayOf(BLOB, TEXT, STRING, INTEGER, REAL, LOCALE, DATETIME, BOOLEAN)
+    fun supportedTypes(): Array<String> =
+            arrayOf(BLOB, TEXT, STRING, INTEGER, REAL, LOCALE, DATETIME, BOOLEAN)
 
     private val variantTypes: MutableMap<Class<*>, String> = HashMap()
 
@@ -249,7 +174,7 @@ object Variants {
 
     fun format(o: Any): CharSequence =
             when (o) {
-                is Text -> o.text
+                is Text -> o.string
                 is Date -> SimpleDateFormat("yy-M-d").format(o)
                 is Locale -> o.displayName
                 else -> o.toString()

@@ -159,6 +159,7 @@ open class Chapter : Iterable<Chapter>, Cloneable {
         return result
     }
 
+    @Suppress("UNCHECKED_CAST")
     open fun dump(chapter: Chapter) {
         chapter.text = text
         chapter.attributes = attributes.clone()
