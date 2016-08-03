@@ -16,7 +16,13 @@
 
 package pw.phylame.jem.epm
 
-interface CommonConfig {
-    fun adjust() {
-    }
+open class CommonConfig(val map: Map<String, Any>) {
+}
+
+open class ZipParseConfig(map: Map<String, Any>) : CommonConfig(map) {
+
+}
+
+open class ZipMakeConfig(map: Map<String, Any>) : CommonConfig(map) {
+//    var zipMethod: Int by map
 }

@@ -22,7 +22,7 @@ import java.io.*
 import java.net.URL
 import java.util.zip.ZipFile
 
-interface Blob {
+interface Flob {
     val name: String
 
     val mime: String
@@ -37,7 +37,7 @@ interface Blob {
             }
 }
 
-abstract class AbstractBlob(private val _mime: String?) : Blob {
+abstract class AbstractBlob(private val _mime: String?) : Flob {
     override val mime: String by lazy {
         Paths.mimeOrDetect(name, _mime)
     }
@@ -45,7 +45,7 @@ abstract class AbstractBlob(private val _mime: String?) : Blob {
     override fun toString(): String = "$name;mime=$mime"
 }
 
-class FileBlob
+class FileFlob
 internal constructor(val file: File, mime: String?) : AbstractBlob(mime) {
     init {
         if (!file.exists()) {
@@ -61,7 +61,7 @@ internal constructor(val file: File, mime: String?) : AbstractBlob(mime) {
     override fun inputStream(): InputStream = file.inputStream()
 }
 
-class ZipBlob
+class ZipFlob
 internal constructor(val zip: ZipFile, val entry: String, mime: String?) : AbstractBlob(mime) {
     init {
         if (zip.getEntry(entry) == null) {
@@ -76,7 +76,7 @@ internal constructor(val zip: ZipFile, val entry: String, mime: String?) : Abstr
     override fun toString(): String = "zip://${zip.name}!${super.toString()}"
 }
 
-class BlockBlob
+class BlockFlob
 internal constructor(override val name: String, val file: RandomAccessFile,
                      var offset: Long, var size: Long, mime: String?) : AbstractBlob(mime) {
     init {
@@ -110,7 +110,7 @@ internal constructor(override val name: String, val file: RandomAccessFile,
     override fun toString(): String = "block://${super.toString()};offset=$offset;size=$size"
 }
 
-class URLBlob
+class URLFlob
 internal constructor(val url: URL, mime: String?) : AbstractBlob(mime) {
     override val name: String = url.path
 
@@ -119,7 +119,7 @@ internal constructor(val url: URL, mime: String?) : AbstractBlob(mime) {
     override fun toString(): String = "${url.toString()};mime=$mime"
 }
 
-class BytesBlob
+class BytesFlob
 internal constructor(override val name: String, val data: ByteArray, mime: String?) :
         AbstractBlob(mime) {
 
@@ -136,21 +136,17 @@ internal constructor(override val name: String, val data: ByteArray, mime: Strin
 }
 
 object Blobs {
-    fun forFile(file: File, mime: String? = null): Blob = FileBlob(file, mime)
+    fun forFile(file: File, mime: String? = null): Flob = FileFlob(file, mime)
 
-    fun forZip(zip: ZipFile, entry: String, mime: String? = null): Blob = ZipBlob(zip, entry, mime)
+    fun forZip(zip: ZipFile, entry: String, mime: String? = null): Flob = ZipFlob(zip, entry, mime)
 
     fun forBlock(name: String, file: RandomAccessFile, offset: Long, size: Long, mime: String? = null):
-            BlockBlob = BlockBlob(name, file, offset, size, mime)
+            BlockFlob = BlockFlob(name, file, offset, size, mime)
 
-    fun forURL(url: URL, mime: String? = null): Blob = URLBlob(url, mime)
+    fun forURL(url: URL, mime: String? = null): Flob = URLFlob(url, mime)
 
-    fun forBytes(name: String, data: ByteArray, mime: String? = null): Blob =
-            BytesBlob(name, data, mime)
+    fun forBytes(name: String, data: ByteArray, mime: String? = null): Flob =
+            BytesFlob(name, data, mime)
 
-    fun emptyFile(name: String = "empty", mime: String? = null): Blob = forBytes(name, byteArrayOf(0), mime)
-}
-
-fun main(args: Array<String>) {
-    println(Blobs.emptyFile())
+    fun emptyFile(name: String = "empty", mime: String? = null): Flob = forBytes(name, byteArrayOf(0), mime)
 }

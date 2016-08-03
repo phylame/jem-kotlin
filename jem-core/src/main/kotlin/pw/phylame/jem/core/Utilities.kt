@@ -152,7 +152,7 @@ object Variants {
                 when (o) {
                     is CharSequence -> STRING
                     is Text -> TEXT
-                    is Blob -> BLOB
+                    is Flob -> BLOB
                     is Date -> DATETIME
                     is Locale -> LOCALE
                     else -> STRING

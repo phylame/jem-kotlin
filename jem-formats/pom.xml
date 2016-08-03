@@ -11,15 +11,14 @@
         <relativePath>../jem-parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>jem-epm</artifactId>
-    <description>E-book parser and maker specification for Jem</description>
+    <artifactId>jem-formats</artifactId>
+    <description>E-book parser and maker implementations</description>
 
     <dependencies>
         <dependency>
             <groupId>pw.phylame.jem</groupId>
-            <artifactId>jem-core</artifactId>
+            <artifactId>jem-epm</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
-
 </project>

@@ -34,14 +34,11 @@ interface Maker {
     fun make(book: Book, file: File, args: Map<String, Any>)
 }
 
-abstract class BookWorker<CF : CommonConfig>
-constructor(val name: String,
-            private val cfgkey: String? = null,
-            private val cfgcls: Class<CF>? = null) {
+abstract class BookWorker<out CF : CommonConfig>(val name: String,
+                                                 private val cfgkey: String? = null,
+                                                 private val cfgcls: Class<CF>? = null) {
     init {
-        if (cfgkey != null && cfgcls == null) {
-            throw IllegalArgumentException("'configKey' is valid but 'configClass' not")
-        }
+        require(cfgkey != null && cfgcls == null) { "'cfgkey' is valid but 'cfgcls' not" }
     }
 
     protected fun fetchConfig(kw: Map<String, Any>): CF? {
@@ -62,7 +59,7 @@ abstract class CommonParser<IN : Closeable, CF : CommonConfig>(name: String, cfg
 
     override fun parse(file: File, args: Map<String, Any>): Book {
         if (!file.exists()) {
-            throw FileNotFoundException(file.path)
+            throw FileNotFoundException("No such file ${file.path}")
         }
         val config = fetchConfig(args)
         val input = openFile(file, config)

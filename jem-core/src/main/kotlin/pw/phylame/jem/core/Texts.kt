@@ -46,7 +46,7 @@ class RawText
 internal constructor(override val string: CharSequence, type: CharSequence) : AbstractText(type)
 
 class BlobText
-internal constructor(val blob: Blob, val encoding: String, type: CharSequence) : AbstractText(type) {
+internal constructor(val blob: Flob, val encoding: String, type: CharSequence) : AbstractText(type) {
 
     private fun reader(): BufferedReader = blob.inputStream().bufferedReader(encoding)
 
@@ -64,7 +64,7 @@ object Texts {
 
     fun forString(str: CharSequence, type: CharSequence = PLAIN): Text = RawText(str, type)
 
-    fun forBlob(blob: Blob, encoding: String, type: CharSequence = PLAIN): Text =
+    fun forBlob(blob: Flob, encoding: String, type: CharSequence = PLAIN): Text =
             BlobText(blob, encoding, type)
 
     fun emptyText(type: CharSequence = PLAIN): Text = forString("", type)

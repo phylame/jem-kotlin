@@ -30,7 +30,7 @@ open class Chapter : Iterable<Chapter>, Cloneable {
         this.text = text
     }
 
-    constructor(title: String, cover: Blob, intro: Text, text: Text = Texts.emptyText()) {
+    constructor(title: String, cover: Flob, intro: Text, text: Text = Texts.emptyText()) {
         attributes.put(Attributes.TITLE, title, false)
         attributes.put(Attributes.COVER, cover, false)
         attributes.put(Attributes.INTRO, intro, false)

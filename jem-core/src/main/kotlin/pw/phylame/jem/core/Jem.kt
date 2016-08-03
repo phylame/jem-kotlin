@@ -82,8 +82,8 @@ var Chapter.binding: String
         put(Attributes.BINDING, value)
     }
 
-var Chapter.cover: Blob?
-    get() = attributes.get<Blob?>(Attributes.COVER, null)
+var Chapter.cover: Flob?
+    get() = attributes.get<Flob?>(Attributes.COVER, null)
     set(value) {
         put(Attributes.COVER, value)
     }
@@ -257,3 +257,11 @@ fun Chapter.select(result: MutableList<Chapter>, limit: Int, recursion: Boolean 
     }
     return count
 }
+
+fun book(init: Book.() -> Unit): Book = Book().apply(init)
+
+fun <T : Chapter> T.chapter(init: T.() -> Unit): Chapter =
+        Chapter().apply {
+            init()
+            this@chapter.append(this)
+        }
