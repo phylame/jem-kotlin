@@ -41,10 +41,8 @@ class UnsupportedFormatException : JemException {
     constructor(cause: Throwable) : super(cause)
 }
 
-open class VariantMap(
-        m: MutableMap<CharSequence, Any> = HashMap(),
-        var validator: ((CharSequence, Any) -> Unit)? = null) :
-        Cloneable, MutableMap<CharSequence, Any> by m {
+open class VariantMap(m: MutableMap<CharSequence, Any> = HashMap(),
+                      var validator: ((CharSequence, Any) -> Unit)? = null) : Cloneable, MutableMap<CharSequence, Any> by m {
 
     inline fun <reified T> get(key: CharSequence, defaultValue: T): T {
         val value = this[key]

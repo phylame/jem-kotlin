@@ -38,7 +38,7 @@ open class Chapter : Iterable<Chapter>, Cloneable {
     }
 
     constructor(chapter: Chapter) {
-        chapter.dump(this)
+        chapter.dumpTo(this)
     }
 
     lateinit var attributes: VariantMap
@@ -155,12 +155,12 @@ open class Chapter : Iterable<Chapter>, Cloneable {
 
     override fun clone(): Chapter {
         val result = super.clone() as Chapter
-        dump(result)
+        dumpTo(result)
         return result
     }
 
     @Suppress("UNCHECKED_CAST")
-    open fun dump(chapter: Chapter) {
+    open fun dumpTo(chapter: Chapter) {
         chapter.text = text
         chapter.attributes = attributes.clone()
         chapter.children = children.clone() as ArrayList<Chapter>
@@ -179,11 +179,11 @@ open class Book : Chapter {
     }
 
     constructor(chapter: Chapter) {
-        chapter.dump(this)
+        chapter.dumpTo(this)
     }
 
     constructor(book: Book) {
-        book.dump(this)
+        book.dumpTo(this)
     }
 
     var extensions: VariantMap = VariantMap()
@@ -193,8 +193,8 @@ open class Book : Chapter {
         super.cleanup()
     }
 
-    override fun dump(chapter: Chapter) {
-        super.dump(chapter)
+    override fun dumpTo(chapter: Chapter) {
+        super.dumpTo(chapter)
         if (chapter is Book) {
             chapter.extensions = extensions.clone()
         }
