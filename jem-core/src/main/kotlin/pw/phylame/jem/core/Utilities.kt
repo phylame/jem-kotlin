@@ -23,6 +23,7 @@ import java.io.StringWriter
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.reflect.KProperty
 
 open class JemException : Exception {
     constructor(message: String) : super(message)
@@ -177,4 +178,11 @@ object Variants {
                 is Locale -> o.displayName
                 else -> o.toString()
             }
+}
+
+class MapDelegate<out T>(val map: Map<String, Any>, val defaultValue: T) {
+    @Suppress("UNCHECKED_CAST")
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        return map[property.name] as? T ?: defaultValue
+    }
 }
