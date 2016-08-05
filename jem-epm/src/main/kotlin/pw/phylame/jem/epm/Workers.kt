@@ -19,6 +19,8 @@ package pw.phylame.jem.epm
 import pw.phylame.jem.core.Book
 import pw.phylame.jem.core.JemException
 import java.io.*
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 interface Parser {
     val name: String
@@ -35,29 +37,29 @@ interface Maker {
 }
 
 abstract class BookWorker<out CF : CommonConfig>(val name: String,
-                                                 private val cfgkey: String? = null,
-                                                 private val cfgcls: Class<CF>? = null) {
+                                                 private val configKey: String? = null,
+                                                 private val configClass: Class<CF>? = null) {
     init {
-        require(cfgkey != null && cfgcls == null) { "'cfgkey' is valid but 'cfgcls' not" }
+        require(configKey != null && configClass == null) { "'configKey' is valid but 'configClass' not" }
     }
 
-    protected fun fetchConfig(kw: Map<String, Any>): CF? {
-        return null
+    protected fun fetchConfig(kw: Map<String, Any>): CF {
+        TODO("add fetch method")
     }
 }
 
-abstract class CommonParser<IN : Closeable, CF : CommonConfig>(name: String, cfgkey: String?, cfgcls: Class<CF>?) :
-        BookWorker<CF>(name, cfgkey, cfgcls), Parser {
+abstract class CommonParser<IN : Closeable, CF : CommonConfig>(name: String, configKey: String?, configClass: Class<CF>?) :
+        BookWorker<CF>(name, configKey, configClass), Parser {
     lateinit protected var source: File
 
-    abstract fun openFile(file: File, config: CF?): IN
+    abstract fun openFile(file: File, config: CF): IN
 
-    open fun validateInput(input: IN, config: CF?) {
+    open fun validateInput(input: IN, config: CF) {
     }
 
-    abstract fun parse(input: IN, config: CF?): Book
+    abstract fun parse(input: IN, config: CF): Book
 
-    override fun parse(file: File, args: Map<String, Any>): Book {
+    override final fun parse(file: File, args: Map<String, Any>): Book {
         if (!file.exists()) {
             throw FileNotFoundException("No such file ${file.path}")
         }
@@ -77,14 +79,39 @@ abstract class CommonParser<IN : Closeable, CF : CommonConfig>(name: String, cfg
     }
 }
 
-abstract class CommonMaker<CF : CommonConfig>(name: String, cfgkey: String?, cfgcls: Class<CF>?) :
-        BookWorker<CF>(name, cfgkey, cfgcls), Maker {
+abstract class CommonMaker<CF : CommonConfig>(name: String, configKey: String?, configClass: Class<CF>?) :
+        BookWorker<CF>(name, configKey, configClass), Maker {
 
-    abstract fun make(book: Book, output: OutputStream, config: CF?)
+    abstract fun make(book: Book, output: OutputStream, config: CF)
 
-    override fun make(book: Book, file: File, args: Map<String, Any>) {
+    override final fun make(book: Book, file: File, args: Map<String, Any>) {
         FileOutputStream(file).buffered().use {
             make(book, it, fetchConfig(args))
         }
     }
+}
+
+abstract class ZipParser<CF : ZipParseConfig>(name: String, configKey: String?, configClass: Class<CF>?) :
+        CommonParser<ZipFile, CF>(name, configKey, configClass) {
+    override final fun openFile(file: File, config: CF): ZipFile = ZipFile(file)
+}
+
+abstract class ZipMaker<CF : ZipMakeConfig>(name: String, configKey: String?, configClass: Class<CF>?) : CommonMaker<CF>(name, configKey, configClass) {
+
+    abstract fun make(book: Book, zipout: ZipOutputStream, config: CF)
+
+    override final fun make(book: Book, output: OutputStream, config: CF) {
+        ZipOutputStream(output).use {
+            it.setMethod(config.zipMethod)
+            it.setLevel(config.zipLevel)
+            it.setComment(config.zipComment)
+            make(book, it, config)
+            it.flush()
+        }
+    }
+}
+
+abstract class BinaryParser<CF : CommonConfig>(name: String, configKey: String?, configClass: Class<CF>?) :
+        CommonParser<RandomAccessFile, CF>(name, configKey, configClass) {
+    override final fun openFile(file: File, config: CF): RandomAccessFile = BufferedRandomAccessFile(file)
 }

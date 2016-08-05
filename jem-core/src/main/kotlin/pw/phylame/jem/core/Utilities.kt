@@ -23,6 +23,8 @@ import java.io.StringWriter
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.reflect.KAnnotatedElement
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 open class JemException : Exception {
@@ -180,9 +182,25 @@ object Variants {
             }
 }
 
-class MapDelegate<out T>(val map: Map<String, Any>, val defaultValue: T) {
+@Retention(AnnotationRetention.RUNTIME)
+annotation class Named(val name: String)
+
+fun KAnnotatedElement.annotationOf(clazz: KClass<out Annotation>): Annotation? =
+        annotations.filter { it.annotationClass == clazz }.firstOrNull()
+
+class MapValue<out T>(val map: Map<String, Any>, val fallback: T, val prefix: String = "") {
+    private var initialized = false
+
+    private var value: T? = null
+
     @Suppress("UNCHECKED_CAST")
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-        return map[property.name] as? T ?: defaultValue
+        if (!initialized) {
+            value = map[prefix + ((property.annotationOf(Named::class) as? Named)?.name ?: property.name)] as? T ?: fallback
+            initialized = true
+        }
+        return value!!
     }
 }
+
+fun <T> mapped(map: Map<String, Any>, fallback: T, prefix: String = "") = MapValue(map, fallback, prefix)
